@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: stg_listings
+    description: >
+      Tabla de staging que normaliza el dataset crudo de listados.
+      Estandariza tipos, limpia strings, aplica límites básicos
+      y anade snapshot_date para time travel.
+    columns:
+      - name: id
+        description: Identificador del listing en la fuente.
+        tests:
+          - not_null
+          - unique
+
+      - name: host_id
+        description: Identificador del anfitrion asociado al listing.
+        tests:
+          - not_null
+
+      - name: host_name
+        description: Nombre del anfitrión.
+
+      - name: neighbourhood_group
+        description: Macro-zona o borough de la ciudad.
+
+      - name: neighbourhood
+        description: Barrio específico dentro del borough.
+
+      - name: latitude
+        description: Latitud del listing.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -90
+              max_value: 90
+
+      - name: longitude
+        description: Longitud del listing.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -180
+              max_value: 180
+
+      - name: room_type
+        description: Tipo de alojamiento.
+
+      - name: price
+        description: Precio por noche informado en la fuente.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: minimum_nights
+        description: Estadía minima requerida se fuerza un mínimo operativo de 1 noche.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+
+      - name: number_of_reviews
+        description: Recuento historico de resenas del listing.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: last_review
+        description: Fecha de la ultima reseña disponible en la fuente.
+
+      - name: reviews_per_month
+        description: Reseñas promedio por mes.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: host_listings_count
+        description: Cantidad de listings que administra el anfitrion en la fuente.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: availability_365
+        description: Dias disponibles en el año; acotado al rango.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 365
+
+      - name: snapshot_date
+        description: Fecha de snapshot corte con la que se registro el estado del listing.
+        tests:
+          - not_null

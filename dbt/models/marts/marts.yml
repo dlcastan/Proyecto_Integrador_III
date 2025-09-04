@@ -1,0 +1,150 @@
+version: 2
+
+models:
+  - name: mart_avg_price_by_area
+    description: "Precio promedio por barrio y distrito."
+    columns:
+      - name: neighbourhood_group
+        description: Distrito borough del listing.
+        tests: [not_null]
+      - name: neighbourhood
+        description: Barrio del listing.
+        tests: [not_null]
+      - name: avg_price
+        description: Precio promedio por barrio.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [neighbourhood_group, neighbourhood]
+
+  - name: mart_roomtype_supply_and_rev
+    description: "Oferta por tipo de habitacion y revenue estimado."
+    columns:
+      - name: room_type
+        description: Tipo de habitacion alojamiento.
+        tests: [not_null, unique]
+      - name: listings
+        description: Cantidad de listings por tipo.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: revenue_est
+        description: Revenue estimado.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+
+  - name: mart_host_inventory_and_prices
+    description: "Top hosts por inventario y estadisticas de precio."
+    columns:
+      - name: host_id
+        description: Identificador del host.
+        tests: [not_null, unique]
+      - name: host_name
+        description: Nombre del host.
+      - name: listings_count
+        description: Inventario administrado por el host.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: avg_price
+        description: Precio promedio del portafolio del host.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: p50_price
+        description: Mediana de precio del host.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: std_price
+        description: Desvio estandar de precios del host.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+
+  - name: mart_availability_by_area_and_type
+    description: "Disponibilidad promedio por area y tipo."
+    columns:
+      - name: neighbourhood_group
+        description: Distrito borough.
+        tests: [not_null]
+      - name: neighbourhood
+        description: Barrio.
+        tests: [not_null]
+      - name: room_type
+        description: Tipo de habitacion.
+        tests: [not_null]
+      - name: avg_availability
+        description: Disponibilidad promedio.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0, max_value: 365}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [neighbourhood_group, neighbourhood, room_type]
+
+  - name: mart_reviews_trend_by_district
+    description: "Tendencia mensual de resenas por distrito."
+    columns:
+      - name: year
+        description: Anio calendario.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 2015, max_value: 2035}
+      - name: month
+        description: Mes calendario.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 1, max_value: 12}
+      - name: neighbourhood_group
+        description: Distrito borough.
+        tests: [not_null]
+      - name: reviews_pm
+        description: Resenas por mes.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [year, month, neighbourhood_group]
+
+  - name: mart_active_concentration_by_neighbourhood
+    description: "Concentracion de listings activos por barrio."
+    columns:
+      - name: neighbourhood_group
+        description: Distrito/borough.
+        tests: [not_null]
+      - name: neighbourhood
+        description: Barrio.
+        tests: [not_null]
+      - name: active_listings
+        description: Cantidad de listings activos.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [neighbourhood_group, neighbourhood]
+
+  - name: mart_price_distribution_outliers
+    description: "Distribucion de precios e outliers por distrito."
+    columns:
+      - name: neighbourhood_group
+        description: Distrito borough.
+        tests: [not_null, unique]
+      - name: p25
+        description: Percentil 25 del precio.
+      - name: p50
+        description: Mediana  del precio.
+      - name: p75
+        description: Percentil 75 del precio.
+      - name: outliers_hi
+        description: Conteo de outliers altos.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: outliers_lo
+        description: Conteo de outliers bajos .
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+
+  - name: mart_availability_vs_reviews
+    description: "Correlacion ocupacion vs reseñas por distrito."
+    columns:
+      - name: neighbourhood_group
+        description: Distrito/borough.
+        tests: [not_null, unique]
+      - name: corr_occ_reviews
+        description: Correlación de Pearson entre ocupación proxy y reviews_per_month.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: -1, max_value: 1}

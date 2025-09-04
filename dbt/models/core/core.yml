@@ -1,0 +1,121 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: >
+      Dimension de fechas con granularidad dia. Incluye atributos calendario e indicador de fin de semana.
+    columns:
+      - name: date_sk
+        description: Clave surrogate de fecha con formato YYYYMMDD.
+        tests: [not_null, unique]
+      - name: full_date
+        description: Fecha en tipo DATE.
+        tests: [not_null]
+      - name: year
+        description: Anio calendario.
+      - name: quarter
+        description: Trimestre calendario.
+      - name: month
+        description: Mes calendario.
+      - name: day
+        description: Dia del mes.
+      - name: day_of_week
+        description: Dia de la semana ISO.
+      - name: week_of_year
+        description: Semana del anio.
+      - name: is_weekend
+        description: Indicador booleano de fin de semana.
+
+  - name: dim_host
+    description: >
+      Dimension de anfitriones. Genera host_sk, consolida host_name y clasifica is_multilister.
+    columns:
+      - name: host_sk
+        description: Clave surrogate del anfitrion.
+        tests: [not_null, unique]
+      - name: host_id
+        description: Identificador del anfitrion en la fuente.
+        tests: [not_null]
+      - name: host_name
+        description: Nombre consolidado del anfitrion.
+      - name: listings_count
+        description: Cantidad de listings administrados por el anfitrion.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: is_multilister
+        description: Indicador booleano de multi-lister.
+      - name: updated_at
+        description: Marca temporal de actualización del registro.
+
+  - name: dim_location
+    description: >
+      Dimensión de ubicación con surrogate key.
+    columns:
+      - name: location_sk
+        description: Clave surrogate de la ubicación.
+        tests: [not_null, unique]
+      - name: neighbourhood_group
+        description: Borough o macro-zona de la ciudad.
+        tests: [not_null]
+      - name: neighbourhood
+        description: Barrio específico dentro del borough.
+        tests: [not_null]
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [neighbourhood_group, neighbourhood]
+
+  - name: dim_room_type
+    description: >
+      Dimension de tipos de habitacion alojamiento. Provee room_type_sk para joins rapidos.
+    columns:
+      - name: room_type_sk
+        description: Clave surrogate del tipo de habitacion.
+        tests: [not_null, unique]
+      - name: room_type
+        description: Descripcion del tipo de habitacion.
+        tests: [not_null]
+
+  - name: fact_listing_snapshot
+    description: >
+      Hecho de snapshots de listings por fecha, con metricas de precio, disponibilidad y resenias.
+    columns:
+      - name: listing_id
+        description: Identificador del listing en la fuente.
+        tests: [not_null]
+      - name: date_sk
+        description: Clave de fecha (FK a dim_date).
+        tests:
+          - relationships: {to: ref('dim_date'), field: date_sk}
+      - name: host_sk
+        description: Clave de anfitrion (FK a dim_host).
+        tests:
+          - relationships: {to: ref('dim_host'), field: host_sk}
+      - name: location_sk
+        description: Clave de ubicacion (FK a dim_location).
+        tests:
+          - relationships: {to: ref('dim_location'), field: location_sk}
+      - name: room_type_sk
+        description: Clave de tipo de habitacion (FK a dim_room_type).
+        tests:
+          - relationships: {to: ref('dim_room_type'), field: room_type_sk}
+      - name: price
+        description: Precio por noche al momento del snapshot.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: minimum_nights
+        description: Estadia minima requerida al momento del snapshot.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 1}
+      - name: number_of_reviews
+        description: Recuento de resenas acumuladas al momento del snapshot.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: reviews_per_month
+        description: Promedio de resenas por mes (puede ser nulo).
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0}
+      - name: availability_365
+        description: Dias disponibles reportados para el anio corriente (0–365).
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between: {min_value: 0, max_value: 365}

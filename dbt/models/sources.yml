@@ -1,0 +1,7 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: ab_nyc
+        description: "Fuente CSV AB_NYC cargada desde S3 a RDS (raw.ab_nyc)."
