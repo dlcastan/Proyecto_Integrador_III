@@ -54,7 +54,7 @@ Este proyecto implementa un pipeline de ingesta, modelado y análisis de datos u
 ├── entrypoint.sh                   # Script de inicialización de contenedor
 ├── requirements.txt                # Dependencias Python
 └── readme.md                       # Documentación
-└── Google Proyecto_Integrador_III.pdf                      # Documentación principal del proyecto
+└── Proyecto_Integrador_III.pdf                      # Documentación principal del proyecto
 ```
 
 ---
